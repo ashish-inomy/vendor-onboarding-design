@@ -19,7 +19,7 @@ There are two major flows:
 ## 2. Goals & Non-Goals
 
 ### 2.1 Goals
-- Automatically understand new vendor listing + product pages
+- Automatically understand new vendor search + product pages
 - Generate extraction rules without developer intervention
 - Validate rules using synthetic tests
 - Run scalable product extraction across thousands of URLs
@@ -73,18 +73,18 @@ Runs when user adds a new vendor domain.
 | Step | Component | Description | LLM? |
 |------|-----------|-------------|------|
 | 1 | Fetch HTML | Download initial vendor page | ❌ Non-LLM |
-| 2 | Identify Listing Page | Detect if page is listing, homepage, product | ✔️ LLM |
-| 3 | Store Listing Instructions | Pagination, filters, search endpoint | ❌ Non-LLM |
-| 4 | Fetch Sample Product Page | Pick a product URL to generate rules | ❌ Non-LLM |
+| 2 | Identify Search Page | Detect if page is listing, homepage, product | ✔️ LLM |
+| 3 | Store Search Instructions | Pagination, filters, search endpoint | ❌ Non-LLM |
+| 4 | Store Search parsing instructions | Identify selectors for product details like title and url | ❌ Non-LLM |
 | 5 | Generate Product Parsing Rules | Identify selectors for fields | ✔️ LLM |
 | 6 | Generate Unique ID Rule | Select best product identifier | ✔️ LLM |
 | 7 | Generate Dedup Logic | Create merge & dedup conditions | ✔️ LLM |
-| 8 | Validate Rules | Run rules on sample product page | ❌ Non-LLM |
 
 ### Output:
 ```
 vendor_rules/
-  listing.json
+  search.json
+  search_rules.json
   product_rules.json
   uid_rule.json
   dedup_logic.py
@@ -98,9 +98,9 @@ Runs automatically to ingest products using stored rules.
 
 | Step | Component | Description | LLM? |
 |------|-----------|-------------|------|
-| 1 | Load Listing Instructions | Read listing rules | ❌ Non-LLM |
-| 2 | Run Search Queries | Marketplace search or category listing | ❌ Non-LLM |
-| 3 | Extract Product URLs | Parse listing page | ❌ Non-LLM |
+| 1 | Load Listing Instructions | Read search rules | ❌ Non-LLM |
+| 2 | Run Search Queries | Marketplace search | ❌ Non-LLM |
+| 3 | Extract Product URLs and title | Parse search page | ❌ Non-LLM |
 | 4 | Validate Rules Pre-Extraction | Ensure rules haven't drifted | ⚠️ LLM-Assisted |
 | 5 | Fetch Product Pages | Scale-out fetch | ❌ Non-LLM |
 | 6 | Execute Parsing Rules | Deterministic extraction | ❌ Non-LLM |
@@ -114,7 +114,8 @@ Rules stored under versioned hierarchy:
 
 ```
 /rules/{vendor_id}/
-    listing.v1.json
+    search.v1.json
+    search_rules.v4.json
     product_rules.v5.json
     uid_rule.v3.json
     dedup_logic.v2.py
@@ -205,6 +206,7 @@ LLMs invoked only where **structural or semantic reasoning** is required.
 - Multi-LLM rule verification
 - Fine-tuned DOM understanding model
 - Visual-based extraction (vision LLMs)
+- Distinct between static websites vs JS heavy for cost reductions
 
 ---
 
